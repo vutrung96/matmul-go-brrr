@@ -8,6 +8,7 @@ import argparse
 # Import your existing CUDA kernels
 from kernels.cublas import cublas
 from kernels.basic import basic
+from kernels.mem_coalesce import mem_coalesce
 
 def verify_output(kernel_name, kernel_func, a, b, rtol=1e-5, atol=1e-5):
     """
@@ -180,7 +181,7 @@ def print_results(results, kernel_names):
         for name in kernel_names:
             kernel_time = results[f'{name}_times'][i]
             speedup = cublas_time / kernel_time if kernel_time > 0 else float('inf')
-            line += f" {kernel_time:<15.6f} {speedup:<10.2f}x"
+            line += f" {kernel_time:<15.6f} {speedup:.2f}x{' ':<5}"
         
         print(line)
     
@@ -191,8 +192,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Benchmark matrix multiplication kernels')
     parser.add_argument('--kernels', type=str, default='basic', 
                         help='Comma-separated list of kernels to benchmark (default: basic)')
-    parser.add_argument('--sizes', type=str, default='1024,2048,4096',
-                        help='Comma-separated list of matrix sizes to benchmark (default: 1024,2048,4096)')
+    parser.add_argument('--sizes', type=str, default='1024,2048,4096,8192',
+                        help='Comma-separated list of matrix sizes to benchmark (default: 1024,2048,4096,8192)')
     parser.add_argument('--runs', type=int, default=3,
                         help='Number of runs for each benchmark (default: 3)')
     parser.add_argument('--no-verify', action='store_true',
@@ -205,7 +206,8 @@ if __name__ == "__main__":
     
     # Create kernel dictionary
     available_kernels = {
-        'basic': basic.basic_matmul
+        'basic': basic.basic_matmul,
+        'mem_coalesce': mem_coalesce.mem_coalesce
     }
     
     # Filter to requested kernels
